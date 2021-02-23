@@ -18,6 +18,7 @@ cache <- new.env(parent = emptyenv())
   }
   if (getOption("ausplotsR_api_debug", default = FALSE)) {
     message('query string value = ', query)
+    start_time <- as.numeric(Sys.time())*1000
   }
   resp <- httr::GET(
                     getOption("ausplotsR_api_url", default= "http://swarmapi.ausplots.aekos.org.au:80"),
@@ -26,6 +27,10 @@ cache <- new.env(parent = emptyenv())
                     path=path,
                     query=query
   )
+  if (getOption("ausplotsR_api_debug", default = FALSE)) {
+    elapsed_time <- as.numeric(Sys.time())*1000 - start_time
+    message('query for path: ', path, ' had elapsed time (ms): ', elapsed_time)
+  }
   httr::stop_for_status(resp, task = httr::content(resp, "text"))
   if (httr::http_type(resp) != "application/json") {
     stop("API did not return json", call. = FALSE)
