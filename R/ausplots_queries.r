@@ -17,7 +17,11 @@ cache <- new.env(parent = emptyenv())
     auth_header <- paste('Bearer', jwt_val)
   }
   if (getOption("ausplotsR_api_debug", default = FALSE)) {
-    message('query string value = ', query)
+    max_length = 50
+    trimmed_query = ifelse(nchar(query) > max_length,
+                           paste0(strtrim(query, max_length), '...'), query)
+    message('Making HTTP call with path = ', path,
+            '; query string = ', trimmed_query)
     start_time <- as.numeric(Sys.time())*1000
   }
   resp <- httr::GET(
