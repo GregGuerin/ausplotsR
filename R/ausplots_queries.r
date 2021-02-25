@@ -17,12 +17,12 @@ cache <- new.env(parent = emptyenv())
     auth_header <- paste('Bearer', jwt_val)
   }
   if (getOption("ausplotsR_api_debug", default = FALSE)) {
-    max_length = 50
-    trimmed_query = ifelse(nchar(query) > max_length,
+    max_length <- 50
+    trimmed_query <- ifelse(nchar(query) > max_length,
                            paste0(strtrim(query, max_length), '...'), query)
     message('Making HTTP call with path = ', path,
             '; query string = ', trimmed_query)
-    start_time <- as.numeric(Sys.time())*1000
+    start_http_time <- as.numeric(Sys.time())*1000
   }
   resp <- httr::GET(
                     getOption("ausplotsR_api_url", default= "http://swarmapi.ausplots.aekos.org.au:80"),
@@ -32,14 +32,24 @@ cache <- new.env(parent = emptyenv())
                     query=query
   )
   if (getOption("ausplotsR_api_debug", default = FALSE)) {
-    elapsed_time <- as.numeric(Sys.time())*1000 - start_time
-    message('query for path: ', path, ' had elapsed time (ms): ', elapsed_time)
+    elapsed_http_time <- as.numeric(Sys.time())*1000 - start_http_time
+    message('  HTTP query for path: ', path,
+            ' took: ', as.integer(elapsed_http_time), 'ms')
   }
   httr::stop_for_status(resp, task = httr::content(resp, "text"))
   if (httr::http_type(resp) != "application/json") {
     stop("API did not return json", call. = FALSE)
   }
-  return(jsonlite::fromJSON(httr::content(resp, "text"), simplifyDataFrame = TRUE))
+  if (getOption("ausplotsR_api_debug", default = FALSE)) {
+    start_parse_time <- as.numeric(Sys.time())*1000
+  }
+  result <- jsonlite::fromJSON(httr::content(resp, "text"), simplifyDataFrame = TRUE)
+  if (getOption("ausplotsR_api_debug", default = FALSE)) {
+    elapsed_parse_time <- as.numeric(Sys.time())*1000 - start_parse_time
+    message('  JSON parsing for path: ', path,
+            ' took: ', as.integer(elapsed_parse_time), 'ms')
+  }
+  return(result)
 }
 ################
 #initial filter function
